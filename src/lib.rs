@@ -330,17 +330,9 @@ pub use tokio;
 
 /// Re-exports of the deno extension crates used by this library
 pub mod extensions {
-    #[cfg(feature = "broadcast_channel")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "broadcast_channel")))]
-    pub use deno_broadcast_channel;
-
     #[cfg(feature = "cache")]
     #[cfg_attr(docsrs, doc(cfg(feature = "cache")))]
     pub use deno_cache;
-
-    #[cfg(feature = "console")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "console")))]
-    pub use deno_console;
 
     #[cfg(feature = "cron")]
     #[cfg_attr(docsrs, doc(cfg(feature = "cron")))]
@@ -369,10 +361,6 @@ pub mod extensions {
     #[cfg(feature = "kv")]
     #[cfg_attr(docsrs, doc(cfg(feature = "kv")))]
     pub use deno_kv;
-
-    #[cfg(feature = "url")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "url")))]
-    pub use deno_url;
 
     #[cfg(feature = "webgpu")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webgpu")))]

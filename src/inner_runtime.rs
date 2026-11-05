@@ -901,6 +901,24 @@ mod test_inner_runtime {
 
     use super::*;
 
+    thread_local! {
+        /// One tokio runtime per test thread, shared by runtime creation and `run_async_task`
+        static TOKIO: tokio::runtime::Runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+    }
+
+    /// `deno_core` binds each isolate to the tokio runtime that is current when it is created,
+    /// and aborts if V8 later posts a delayed task (e.g. GC) without one, so enter it first.
+    fn new_test_runtime() -> InnerRuntime<JsRuntime> {
+        TOKIO.with(|tokio| {
+            let _guard = tokio.enter();
+            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
+                .expect("Could not load runtime")
+        })
+    }
+
     /// Used for blocking functions
     fn run_async_task<T, F, U>(f: F) -> T
     where
@@ -908,16 +926,13 @@ mod test_inner_runtime {
         F: FnOnce() -> U,
     {
         let timeout = Duration::from_secs(2);
-        let tokio = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .thread_keep_alive(timeout)
-            .build()
-            .unwrap();
-        tokio
-            .block_on(async move {
-                tokio::time::timeout(timeout, f())
-                    .await
-                    .expect("Test failed")
+        TOKIO
+            .with(|tokio| {
+                tokio.block_on(async move {
+                    tokio::time::timeout(timeout, f())
+                        .await
+                        .expect("Test failed")
+                })
             })
             .expect("Timed out")
     }
@@ -930,9 +945,7 @@ mod test_inner_runtime {
 
     #[test]
     fn test_decode_args() {
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         // empty
         let args = decode_args_to_globals(&json_args!(), &mut runtime.deno_runtime)
@@ -981,9 +994,7 @@ mod test_inner_runtime {
 
     #[test]
     fn test_put_take() {
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         runtime.put(2usize).expect("Could not put value");
         let v = runtime.take::<usize>().expect("Could not take value");
@@ -992,9 +1003,7 @@ mod test_inner_runtime {
 
     #[test]
     fn test_register_async_function() {
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
         runtime
             .register_async_function(
                 "test",
@@ -1020,9 +1029,7 @@ mod test_inner_runtime {
 
     #[test]
     fn test_register_function() {
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
         runtime
             .register_function(
                 "test",
@@ -1043,9 +1050,7 @@ mod test_inner_runtime {
     #[cfg(any(feature = "web", feature = "web_stub"))]
     #[test]
     fn test_eval() {
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         run_async_task(|| async move {
             let v = runtime.eval("2 + 2").await.expect("failed to eval");
@@ -1073,9 +1078,7 @@ mod test_inner_runtime {
     #[cfg(feature = "web_stub")]
     #[test]
     fn test_base64() {
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         run_async_task(|| async move {
             let result = runtime.eval("btoa('foo')").await.expect("failed to eval");
@@ -1102,9 +1105,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         let module = run_async_task(|| async move { rt.load_modules(Some(&module), vec![]).await });
@@ -1144,9 +1145,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         let module = run_async_task(|| async move { rt.load_modules(Some(&module), vec![]).await });
@@ -1184,9 +1183,7 @@ mod test_inner_runtime {
         );
 
         run_async_task(|| async move {
-            let mut runtime =
-                InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                    .expect("Could not load runtime");
+            let mut runtime = new_test_runtime();
             let handle = runtime.load_modules(Some(&module), vec![]).await?;
 
             let f = runtime.get_function_by_name(None, "fna").unwrap();
@@ -1228,9 +1225,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         let module = run_async_task(|| async move { rt.load_modules(Some(&module), vec![]).await });
@@ -1257,9 +1252,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         let module = run_async_task(|| async move {
@@ -1294,9 +1287,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         run_async_task(|| async move {
@@ -1326,9 +1317,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         run_async_task(|| async move {
@@ -1353,9 +1342,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         run_async_task(|| async move {
@@ -1378,9 +1365,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         let module = run_async_task(|| async move { rt.load_modules(Some(&module), vec![]).await });
@@ -1425,9 +1410,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         let module_ = module.clone();
@@ -1437,9 +1420,7 @@ mod test_inner_runtime {
             );
         assert!(result);
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         let result =
@@ -1458,9 +1439,7 @@ mod test_inner_runtime {
         ",
         );
 
-        let mut runtime =
-            InnerRuntime::<JsRuntime>::new(RuntimeOptions::default(), CancellationToken::new())
-                .expect("Could not load runtime");
+        let mut runtime = new_test_runtime();
 
         let rt = &mut runtime;
         let module = run_async_task(|| async move { rt.load_modules(Some(&module), vec![]).await });

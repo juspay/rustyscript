@@ -123,19 +123,17 @@ impl RustyCjsCodeAnalyzer {
     ) -> Result<ExtNodeCjsAnalysis<'a>, JsErrorBox> {
         let analysis = self.inner_cjs_analysis(specifier, &source)?;
         match analysis {
-            CjsAnalysis::Esm(source, Some(CjsAnalysisExports { exports, reexports }))
+            CjsAnalysis::Esm(source, Some(exports))
                 if esm_analysis_mode == EsmAnalysisMode::SourceOnly =>
             {
-                Ok(ExtNodeCjsAnalysis::Esm(
-                    Cow::Owned(source),
-                    Some(CjsAnalysisExports { exports, reexports }),
-                ))
+                Ok(ExtNodeCjsAnalysis::Esm(Cow::Owned(source), Some(exports)))
             }
             CjsAnalysis::Esm(source, _) => Ok(ExtNodeCjsAnalysis::Esm(Cow::Owned(source), None)),
             CjsAnalysis::Cjs { exports, reexports } => {
                 Ok(ExtNodeCjsAnalysis::Cjs(CjsAnalysisExports {
                     exports,
                     reexports,
+                    member_reexports: vec![],
                 }))
             }
         }
@@ -164,17 +162,30 @@ impl node_resolver::analyze::CjsCodeAnalyzer for RustyCjsCodeAnalyzer {
                         return Ok(ExtNodeCjsAnalysis::Cjs(CjsAnalysisExports {
                             exports: vec![],
                             reexports: vec![],
+                            member_reexports: vec![],
                         }));
                     }
                 } else {
                     return Ok(ExtNodeCjsAnalysis::Cjs(CjsAnalysisExports {
                         exports: vec![],
                         reexports: vec![],
+                        member_reexports: vec![],
                     }));
                 }
             }
         };
 
         self.analyze_cjs(specifier, source, esm_analysis_mode)
+    }
+
+    async fn analyze_cjs_member_props<'a>(
+        &self,
+        _specifier: &ModuleSpecifier,
+        _maybe_source: Option<Cow<'a, str>>,
+        _member: &str,
+    ) -> Result<Option<Vec<String>>, JsErrorBox> {
+        // `deno_ast` does not provide member re-export analysis, so we never
+        // report `member_reexports` and have no member props to surface.
+        Ok(None)
     }
 }

@@ -1,6 +1,7 @@
-import * as init from 'ext:deno_webgpu/00_init.js';
+import { core } from "ext:core/mod.js";
+const init = core.loadExtScript("ext:deno_webgpu/00_init.js");
 //import * as webgpu from 'ext:deno_webgpu/01_webgpu.js';
-import * as webgpuSurface from 'ext:deno_webgpu/02_surface.js';
+const webgpuSurface = core.loadExtScript("ext:deno_canvas/02_surface.js");
 
 globalThis.Deno.UnsafeWindowSurface = webgpuSurface.UnsafeWindowSurface;
 

@@ -1,3 +1,6 @@
+(function () {
+const { core, primordials } = __bootstrap;
+
 // Minimal URLPattern implementation for web_stub
 // This is a simplified version that may not support all features
 
@@ -61,4 +64,5 @@ class URLPattern {
   get hash() { return this.#pattern?.hash ?? '*'; }
 }
 
-export { URLPattern };
+return { URLPattern };
+})();

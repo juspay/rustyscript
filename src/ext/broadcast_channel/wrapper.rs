@@ -62,11 +62,16 @@ use uuid::Uuid;
 use crate::{big_json_args, Error, Runtime};
 
 /// Message type matching deno_web's internal InMemoryChannelMessage structure
-#[derive(Clone, Debug)]
+///
+/// This must stay field-for-field identical to the private struct in
+/// `deno_web/broadcast_channel.rs`, since the sender is reinterpreted below.
+#[derive(Clone)]
 struct InMemoryChannelMessage {
     name: Arc<String>,
     data: Arc<Vec<u8>>,
     uuid: Uuid,
+    /// Out-of-band `SharedArrayBuffer` backing stores (added in deno_web 0.29x)
+    sabs: Arc<Mutex<Vec<deno_core::v8::SharedRef<deno_core::v8::BackingStore>>>>,
 }
 
 /// Helper struct to wrap a broadcast channel
@@ -157,6 +162,7 @@ impl BroadcastChannelWrapper {
             name: Arc::new(self.name.clone()),
             data: Arc::new(data),
             uuid: self.uuid,
+            sabs: Arc::new(Mutex::new(Vec::new())),
         };
 
         self.sender

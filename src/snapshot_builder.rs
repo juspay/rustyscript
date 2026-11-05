@@ -93,6 +93,8 @@ impl SnapshotBuilder {
     ///
     pub fn new(options: RuntimeOptions) -> Result<Self, Error> {
         let tokio = AsyncBridge::new(options.timeout)?;
+        let handle = tokio.tokio_runtime().handle();
+        let _guard = handle.enter();
         let inner = InnerRuntime::new(options, tokio.heap_exhausted_token())?;
         Ok(Self { inner, tokio })
     }
@@ -107,6 +109,8 @@ impl SnapshotBuilder {
         tokio: Rc<tokio::runtime::Runtime>,
     ) -> Result<Self, Error> {
         let tokio = AsyncBridge::with_tokio_runtime(options.timeout, tokio);
+        let handle = tokio.tokio_runtime().handle();
+        let _guard = handle.enter();
         let inner = InnerRuntime::new(options, tokio.heap_exhausted_token())?;
         Ok(Self { inner, tokio })
     }
@@ -121,6 +125,8 @@ impl SnapshotBuilder {
         handle: tokio::runtime::Handle,
     ) -> Result<Self, Error> {
         let tokio = AsyncBridge::with_runtime_handle(options.timeout, handle);
+        let handle = tokio.tokio_runtime().handle();
+        let _guard = handle.enter();
         let inner = InnerRuntime::new(options, tokio.heap_exhausted_token())?;
         Ok(Self { inner, tokio })
     }

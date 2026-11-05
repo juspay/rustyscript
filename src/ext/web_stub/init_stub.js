@@ -1,6 +1,7 @@
-import * as DOMException from 'ext:deno_web/01_dom_exception.js';
-import * as timers from 'ext:deno_web/02_timers.js';
-import * as base64 from 'ext:deno_web/05_base64.js';
+import { core } from "ext:core/mod.js";
+const DOMException = core.loadExtScript("ext:deno_web/01_dom_exception.js");
+const timers = core.loadExtScript("ext:deno_web/02_timers.js");
+const base64 = core.loadExtScript("ext:deno_web/05_base64.js");
 
 import { applyToGlobal, nonEnumerable, writeable } from 'ext:rustyscript/rustyscript.js';
 applyToGlobal({

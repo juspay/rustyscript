@@ -1,7 +1,9 @@
+(function () {
+const { core, primordials } = __bootstrap;
+
 // Minimal console implementation for web_stub
 // This provides the Console class and inspect function that init_console.js needs
 
-import { primordials } from "ext:core/mod.js";
 const {
   ObjectAssign,
   ObjectFromEntries,
@@ -153,4 +155,5 @@ class Console {
   }
 }
 
-export { Console, inspect, createFilteredInspectProxy };
+return { Console, inspect, createFilteredInspectProxy };
+})();

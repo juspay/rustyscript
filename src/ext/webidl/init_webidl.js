@@ -1,4 +1,5 @@
-import * as webidl from 'ext:deno_webidl/00_webidl.js';
+import { core } from "ext:core/mod.js";
+const webidl = core.loadExtScript("ext:deno_webidl/00_webidl.js");
 
 import { applyToGlobal, nonEnumerable } from 'ext:rustyscript/rustyscript.js';
 applyToGlobal({

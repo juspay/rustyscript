@@ -209,6 +209,7 @@ impl RustyResolver {
             | MediaType::Mjs
             | MediaType::Html
             | MediaType::Sql
+            | MediaType::Markdown
             | MediaType::Dmts => false,
 
             MediaType::Cjs | MediaType::Cts | MediaType::Dcts => true,
@@ -318,6 +319,7 @@ impl RustyNpmPackageFolderResolver {
         let options = ByonmNpmResolverCreateOptions {
             sys: NodeResolutionSys::new(RealSys, Some(resolution_cache.clone())),
             root_node_modules_dir: base_dir.clone(),
+            search_stop_dir: None,
             pkg_json_resolver: pjson.clone(),
         };
 
@@ -584,6 +586,13 @@ impl NodeRequireLoader for RequireLoader {
 
             _ => Ok(true),
         }
+    }
+
+    fn is_maybe_cjs_from_require(
+        &self,
+        specifier: &reqwest::Url,
+    ) -> Result<bool, PackageJsonLoadError> {
+        self.is_maybe_cjs(specifier)
     }
 }
 impl Clone for RequireLoader {
