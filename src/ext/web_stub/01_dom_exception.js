@@ -1,6 +1,8 @@
+(function () {
+const { core, primordials } = __bootstrap;
+
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
-import { primordials } from "ext:core/mod.js";
 const {
   ErrorPrototype,
   ErrorCaptureStackTrace,
@@ -14,8 +16,8 @@ const {
   SymbolFor,
 } = primordials;
 
-import * as webidl from "ext:deno_webidl/00_webidl.js";
-import { createFilteredInspectProxy } from "ext:deno_web/01_console.js";
+const webidl = core.loadExtScript("ext:deno_webidl/00_webidl.js");
+const { createFilteredInspectProxy } = core.loadExtScript("ext:deno_web/01_console.js");
 
 const _name = Symbol("name");
 const _message = Symbol("message");
@@ -184,4 +186,5 @@ for (let i = 0; i < entries.length; ++i) {
   ObjectDefineProperty(DOMException.prototype, key, desc);
 }
 
-export { DOMException, DOMExceptionPrototype };
+return { DOMException, DOMExceptionPrototype };
+})();

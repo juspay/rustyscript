@@ -1,3 +1,6 @@
+(function () {
+const { core, primordials } = __bootstrap;
+
 // Minimal URL implementation for web_stub
 // Uses the native V8 URL implementation
 
@@ -7,4 +10,5 @@
 const URL = globalThis.URL;
 const URLSearchParams = globalThis.URLSearchParams;
 
-export { URL, URLSearchParams };
+return { URL, URLSearchParams };
+})();

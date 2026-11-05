@@ -138,6 +138,7 @@ impl ExtensionTrait<WebOptions> for deno_web::deno_web {
         deno_web::deno_web::init(
             options.blob_store,
             options.base_url,
+            true,
             options.broadcast_channel,
         )
     }

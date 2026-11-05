@@ -166,13 +166,10 @@ impl Default for ExtensionOptions {
 
         Self {
             #[cfg(feature = "web")]
-            web: {
-                let mut web_options = web::WebOptions::default();
+            web: web::WebOptions {
                 #[cfg(feature = "broadcast_channel")]
-                {
-                    web_options.broadcast_channel = broadcast_channel.clone();
-                }
-                web_options
+                broadcast_channel: broadcast_channel.clone(),
+                ..Default::default()
             },
 
             #[cfg(feature = "crypto")]

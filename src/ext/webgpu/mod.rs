@@ -18,10 +18,16 @@ impl ExtensionTrait<()> for deno_webgpu::deno_webgpu {
         deno_webgpu::deno_webgpu::init()
     }
 }
+impl ExtensionTrait<()> for deno_canvas::deno_canvas {
+    fn init((): ()) -> Extension {
+        deno_canvas::deno_canvas::init()
+    }
+}
 
 pub fn extensions(is_snapshot: bool) -> Vec<Extension> {
     vec![
         deno_webgpu::deno_webgpu::build((), is_snapshot),
+        deno_canvas::deno_canvas::build((), is_snapshot),
         init_webgpu::build((), is_snapshot),
     ]
 }

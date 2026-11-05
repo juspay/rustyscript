@@ -1,7 +1,9 @@
+(function () {
+const { core, primordials } = __bootstrap;
+
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
-import * as webidl from "ext:deno_webidl/00_webidl.js";
-import { op_base64_atob, op_base64_btoa } from "ext:core/ops";
-import { primordials } from "ext:core/mod.js";
+const webidl = core.loadExtScript("ext:deno_webidl/00_webidl.js");
+const { op_base64_atob, op_base64_btoa } = core.ops;
 const {
     ObjectPrototypeIsPrototypeOf,
     TypeErrorPrototype,
@@ -49,6 +51,7 @@ function btoa(data) {
     }
 }
 
-export {
+return {
     atob, btoa
 }
+})();
